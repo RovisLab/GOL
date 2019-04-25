@@ -1,0 +1,50 @@
+%YAML 1.0
+---
+
+# Parameters
+Min resize: 25
+Max resize: 150
+# Horizontal perspective transform parameters
+Min H perspective: -0.3
+Max H perspective: 0.3
+# Vertical perspective transform parameters
+Min V perspective: -0.3
+Max V perspective: 0.3
+Min light: 1
+Max light: 90
+Min noise value: 10
+Max noise value: 15
+Min blur amplitude: 15
+Max blur amplitude: 30
+Vertical max aberration: 4
+Horizontal max aberration: 4
+# K parameter for radial distortion (http://en.wikipedia.org/wiki/Distortion_(optics))
+Radial distortion: 0.000005
+# X and Y coordinates of center of distortion
+X center distortion: 145
+Y center distortion: 155
+Halo amount: 11
+Max enlarge background vertical: 10
+Max enlarge background horizontal: 10
+
+# Otha threshold stuff: dThR1, dThR2, nThL, nRGDif, nGBDif, nBRDif
+Otha: [0.024, -0.027, 100, 25, 25, 25]
+
+# Color distributions: [B channel mean, B channel dev, G channel mean, G channel dev, R channel mean, R channel dev]
+Black: [40, 28, 39, 26, 33, 26]
+White: [151, 48, 154, 50, 148, 54]
+Red: [56, 27, 58, 30, 126, 55]
+
+# Custozime applied filters
+Use background: true
+Use fish eye effect: true
+Use randomise colors: true
+Use salt and pepper noise: true
+
+# Crop parameters
+Crop image: true
+Aspect ratio: [1, 1]
+
+# Labels
+Use labels: false
+Labels: []
