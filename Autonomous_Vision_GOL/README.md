@@ -15,7 +15,6 @@ Autonomous Vision GOL is a Python based framework used for running a One-Shot Le
 - Pillow
 - opencv-python
 - scikit-image
-- platypus
 - platypus-opt
 - matplotlib
 - pygmo
