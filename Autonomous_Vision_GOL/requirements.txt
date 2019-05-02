@@ -1,0 +1,10 @@
+pyyaml
+Pillow
+opencv-python
+scikit-image
+platypus
+matplotlib
+pygmo
+keras
+tensorflow
+platypus-opt
