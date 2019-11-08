@@ -1,7 +1,7 @@
 from tkinter import Frame, LabelFrame, Canvas
 from tkinter import TOP, NW, BOTH
 from PIL import Image, ImageTk
-from Filters_applier import FiltersApplier
+from filters_applier import FiltersApplier
 
 
 # Class handles parameters sampling frame

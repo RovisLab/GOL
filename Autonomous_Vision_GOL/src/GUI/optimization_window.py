@@ -161,8 +161,8 @@ class OptimizationWindow(Frame):
                                     bg_path=self.background_path,
                                     regularization_path=self.regularization_path,
                                     berkley_path=self.berkley_path,
-                                    image_step=int(self.image_step),
-                                    frame=self.drawing_canvas)
+                                    image_step=int(self.image_step))
+                                    # frame=self.drawing_canvas)
         result = run_optimization(optimizer, int(self.num_epochs))
         costs, sol_vars = optimizer.decode_results(result)
         for i in range(0, len(costs)):

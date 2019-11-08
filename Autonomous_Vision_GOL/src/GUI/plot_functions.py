@@ -4,6 +4,9 @@ import tkinter as tk
 import matplotlib.backends.tkagg as tkagg
 import pygmo as pg
 from matplotlib.backends.backend_agg import FigureCanvasAgg
+from PIL import Image, ImageQt
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from PyQt5.QtGui import QPixmap
 
 
 class ParetoPlotter(object):
@@ -11,7 +14,7 @@ class ParetoPlotter(object):
     optimal_models_epochs = list()
 
     @staticmethod
-    def plot_solution(canvas, solution, accuracy, epoch, epoch_nr):
+    def plot_solution(widget, solution, accuracy, epoch, epoch_nr):
         print("Accuracy:{0}".format(accuracy))
         print("Solution:{0}".format(solution))
         ParetoPlotter.optimal_models_epochs = list()
@@ -44,6 +47,8 @@ class ParetoPlotter(object):
         ax2.set_ylabel("Accuracy")
         ax2.set_xlim([0, 300])
         ax2.set_ylim([0, 1.3])
+
+
 
         # Transform the points so that the fronts will be relevant
         plot_points = list()
@@ -83,8 +88,39 @@ class ParetoPlotter(object):
                 ax3.step([c[0] for c in tmp], [c[1]
                                               for c in tmp], color=cl[ndr], where='post')
             plt.show()
+
+        # Convert the matplotlib Figure to PIL Image
+        plot_fig_canvas = FigureCanvas(plot_fig)
+        plot_fig_img = ParetoPlotter.fig2image(plot_fig_canvas)
+        # plot_fig_img = plot_fig_img.resize((300, 300))
+        # Show the image as a test
+        # plot_fig_img.show()
+        # Convert the Image to QPixmap
+        qt_plot_fig_img = ImageQt.ImageQt(plot_fig_img)
+        qt_plot_fig_pixmap = QPixmap.fromImage(qt_plot_fig_img)
+        # Integrate the QPixmap in the GUI
+        widget.setPixmap(qt_plot_fig_pixmap)
         # ------------------------------------------------------------------------------------------------------------------
-        return ParetoPlotter.draw_figure(canvas, plot_fig)
+        # return ParetoPlotter.draw_figure(canvas, plot_fig)
+
+    @staticmethod
+    def fig2data(figure_canvas):
+        # Draw the renderer
+        figure_canvas.draw()
+        # Get RGBA buffer from figure
+        w, h = figure_canvas.get_width_height()
+        buffer = np.fromstring(figure_canvas.tostring_argb(), dtype=np.uint8)
+        buffer.shape = (w, h, 4)
+        # Roll the alpha channel to have the buffer in RGBA colorspace
+        buffer = np.roll(buffer, 3, axis=2)
+        return buffer
+
+    @staticmethod
+    def fig2image(figure):
+        buffer = ParetoPlotter.fig2data(figure)
+        w, h, d = buffer.shape
+        return Image.frombytes("RGBA", (w, h), buffer.tobytes())
+
 
     @staticmethod
     def draw_figure(canvas, figure, loc=(0, 0)):

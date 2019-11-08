@@ -1,12 +1,12 @@
-from Config_file import ConfigFile
-from Paths_window_frame import PathsWindow
-from Parameters_window_frame import ParametersWindow
+from config_file import ConfigFile
+from paths_window_frame import PathsWindow
+from parameters_window_frame import ParametersWindow
 from optimization_window import OptimizationWindow
-from Artificial_Samples_Generator import ASG
-from While_generation_window_frame import GenerationWindow
-from Finish_window_frame import FinishWindow
+from while_generation_window_frame import GenerationWindow
+from finish_window_frame import FinishWindow
 from tkinter import Tk, Frame, Button
 from tkinter import BOTTOM, TOP, E, W, DISABLED, LEFT, RIGHT
+from object_detection_asg import ObjectDetectionASG
 import _thread
 
 
@@ -23,7 +23,7 @@ class Application(Tk):
         self.param_dict = ConfigFile.read_default_config()
 
         # Generator object
-        self.generator = ASG()
+        self.generator = ObjectDetectionASG()
 
         # Objects corresponding to first frame - asking for directories
         self.next_button = Button(self,

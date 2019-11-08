@@ -1,15 +1,12 @@
-import glob
 import shutil
 import os
-import math
-from skimage import feature
 import numpy as np
 import cv2
 from platypus import *
-from Artificial_Samples_Generator import ASG
+from object_detection_asg import ObjectDetectionASG
 from plot_functions import ParetoPlotter
-import classifier
-
+from classifier import Classifier
+from optimizer_utils import bhatt, bhatt_coeff, lbp_feature
 
 NUM_POINTS = 24
 RADIUS = 8
@@ -18,62 +15,8 @@ RESIZE_X = 32
 RESIZE_Y = 32
 
 
-def lbp_feature(image, num_points, radius, resize=(0, 0)):
-    """
-    Compute the Local Binary Pattern representation of the image and build the histogram of patterns
-    :param image: image
-    :param num_points: number of points for LBP
-    :param radius: radius of LBP
-    :param resize: resize images to specified value
-    :return: histogram of LBP features
-    """
-    if resize[0] != 0 and resize[1] != 0:
-        processed_image = cv2.resize(image, resize)
-    else:
-        processed_image = image
-    if len(image.shape) == 3:
-        num_chn = image.shape[2]
-        if num_chn == 3:
-            processed_image = cv2.cvtColor(processed_image, cv2.COLOR_BGR2GRAY)
-        elif num_chn == 4:
-            processed_image = cv2.cvtColor(processed_image, cv2.COLOR_BGRA2GRAY)
-
-    lbp = feature.local_binary_pattern(processed_image, num_points, radius, method="uniform")
-    (hist, _) = np.histogram(lbp.ravel(),
-                             bins=np.arange(0, num_points + 3),
-                             range=(0, num_points + 2))
-    hist = hist.astype("float")
-    hist /= hist.sum()
-    return hist
-
-
-def bhatt_coeff(u, v):
-    """
-    B_C = sum(sqrt(u,v))
-    :param u: first vector
-    :param v: second vector
-    :return: Bhattacharyya Distance Coefficient
-    """
-    if len(u) != len(v):
-        raise ValueError
-    return sum(math.sqrt(u_i * v_i) for u_i, v_i in zip(u, v))
-
-
-def bhatt(u, v):
-    """
-    B_D = -ln(B_C)
-    :param u: first vector
-    :param v: second vector
-    :return: Bhattacharyya Distance
-    """
-    if len(u) != len(v):
-        raise ValueError
-    # return -math.log(bhatt_coeff(u, v), math.e)
-    return bhatt_coeff(u, v)
-
-
 class ParetoOptimizer(Problem):
-    def __init__(self, template_path, output_path, bg_path, regularization_path, berkley_path, image_step, frame):
+    def __init__(self, template_path, output_path, bg_path, regularization_path, berkley_path, image_step, widget):
         super(ParetoOptimizer, self).__init__(nvars=18, nobjs=1, nconstrs=6)
         self.per_epoch_results = list()
         self.pic_w = None
@@ -81,7 +24,7 @@ class ParetoOptimizer(Problem):
         self.pic = None
         self.num_sane = 0
         self.num_insane = 0
-        self.frame = frame
+        # self.frame = frame
         self.berkley_path = berkley_path
         self.output_path = output_path
         self.template_path = template_path
@@ -97,14 +40,25 @@ class ParetoOptimizer(Problem):
         self.constraints[:] = ">0"
         self.epoch = 0
 
-    def plot_results(self, frame, epoch_nr):
+        self.widget = widget
+
+    def qt_plot_results(self, epoch_nr):
         energy_v = [v[1] for v in self.per_epoch_results]
         acc_v = [v[0] for v in self.per_epoch_results]
-        return ParetoPlotter.plot_solution(frame,
-                                            energy_v,
-                                            acc_v,
-                                            self.epoch,
-                                            epoch_nr)
+        ParetoPlotter.plot_solution(self.widget,
+                                           energy_v,
+                                           acc_v,
+                                           self.epoch,
+                                           epoch_nr)
+
+    # def plot_results(self, frame, epoch_nr):
+    # energy_v = [v[1] for v in self.per_epoch_results]
+    # acc_v = [v[0] for v in self.per_epoch_results]
+    # return ParetoPlotter.plot_solution(frame,
+    #                                     energy_v,
+    #                                     acc_v,
+    #                                     self.epoch,
+    #                                     epoch_nr)
 
     def evaluate(self, solution):
         min_resize = solution.variables[0]
@@ -167,7 +121,7 @@ class ParetoOptimizer(Problem):
         for r_s in feature_set_reg:
             for g_s in feature_set_gen:
                 b_d = bhatt(r_s, g_s)
-                energy += math.sqrt(1.0 - (1.0 / math.sqrt(np.mean(r_s) * np.mean(g_s) * (len(r_s)**2))) * b_d)
+                energy += math.sqrt(1.0 - (1.0 / math.sqrt(np.mean(r_s) * np.mean(g_s) * (len(r_s) ** 2))) * b_d)
         print("energy: %s" % energy)
         return energy
 
@@ -212,12 +166,12 @@ class ParetoOptimizer(Problem):
         max_noise = params[9]
         min_blur = params[10]
         max_blur = params[11]
-        if max_resize - min_resize <= 0 or\
-            max_h_persp - min_h_persp <= 0 or\
-            max_v_persp - min_v_persp <= 0 or\
-            max_brightness - min_brightness <= 0 or\
-            max_noise - min_noise <= 0 or\
-            max_blur - min_blur <= 0:
+        if max_resize - min_resize <= 0 or \
+                max_h_persp - min_h_persp <= 0 or \
+                max_v_persp - min_v_persp <= 0 or \
+                max_brightness - min_brightness <= 0 or \
+                max_noise - min_noise <= 0 or \
+                max_blur - min_blur <= 0:
             return False
         return True
 
@@ -250,6 +204,8 @@ class ParetoOptimizer(Problem):
         if not os.path.exists(pred_path):
             raise IOError
 
+        classifier = Classifier()
+
         classifier.prepare_training_set(path2data=self.output_path, size=(RESIZE_X, RESIZE_Y))
         classifier.generate_training_annotation(path2data=self.output_path,
                                                 annotation_file=annotation_file_path,
@@ -276,7 +232,7 @@ class ParetoOptimizer(Problem):
         self.per_epoch_results.append((acc, energy))
 
     def run_and_evaluate(self, params):
-        asg_obj = ASG()
+        asg_obj = ObjectDetectionASG()
         if self._validate_parameters(params) is True:
             asg_obj.run_generator_from_parameters(parameters=params,
                                                   epoch_nr=self.num_sane + self.num_insane,
@@ -286,8 +242,9 @@ class ParetoOptimizer(Problem):
 
             self.train_yolo_and_evaluate(energy)
             # self.train_yolo_and_evaluate_dummy(energy)
-            self.pic = self.plot_results(self.frame, self.num_insane + self.num_sane)
-            self.pic_w, self.pic_h = self.pic.width(), self.pic.height()
+            # self.pic = self.plot_results(self.frame, self.num_insane + self.num_sane)
+            self.qt_plot_results(self.num_sane + self.num_insane)
+            # self.pic_w, self.pic_h = self.pic.width(), self.pic.height()
             self.cleanup_output()
             self.num_sane += 1
             print("Got sane energy: {0}, energy value: {1}".format(self.num_sane, energy))

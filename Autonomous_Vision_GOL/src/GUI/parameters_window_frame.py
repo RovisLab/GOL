@@ -1,7 +1,7 @@
 from tkinter import TOP, LEFT, RIGHT, BOTTOM, S, W, CENTER, Y, VERTICAL
 from tkinter import Frame, Scale, Label, Button
 from tkinter.ttk import Separator
-from Apply_filters_frame import ApplyFiltersFrame
+from apply_filters_frame import ApplyFiltersFrame
 from PIL import Image
 import glob
 import random

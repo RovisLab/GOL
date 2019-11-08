@@ -3,9 +3,9 @@ pyyaml
 Pillow
 opencv-python
 scikit-image
-platypus
-matplotlib
+matplotlib==3.0.3
 pygmo
-keras
-tensorflow
+keras==2.2.0
+tensorflow-gpu==1.13.1
 platypus-opt
+pyqt5

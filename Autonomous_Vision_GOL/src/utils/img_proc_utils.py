@@ -30,7 +30,7 @@ def error_pop_up():
 
 
 def transform_perspective(img, origin_points, warped_points, img_width, img_height):
-    from Artificial_Samples_Generator import ASG
+    from artificial_samples_generator import ASG
     perspective_transform = cv2.getPerspectiveTransform(origin_points, warped_points)
     pts = cv2.perspectiveTransform(np.float32([[34, 7], [61, 89]]).reshape(-1, 1, 2), perspective_transform)
     # print(pts)

@@ -2,10 +2,9 @@ import ctypes
 import yaml
 import cv2
 from image_transformation import *
-from utils import get_img_properties
+from img_proc_utils import get_img_properties
 
 # Filters applier DLL object
-lib = ctypes.cdll.LoadLibrary("../bin/tu_sampling_filters.dll")
 
 class FiltersParameters(object):
     paths = {
@@ -31,6 +30,7 @@ class FiltersParameters(object):
 # Class handles parameters sampling
 class FiltersApplier(object):
     def __init__(self, config_path):
+        print("Entered filters applier")
         self.obj = lib.apply_filters_new()
         self._config_path = config_path
 
